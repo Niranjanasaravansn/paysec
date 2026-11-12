@@ -1,0 +1,17 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const { errorHandler } = require('./middleware/error');
+const app = express();
+app.set('trust proxy', 1);
+app.use(helmet());
+app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(rateLimit({ windowMs: 60 * 1000, limit: 120, standardHeaders: true }));
+app.get('/api/health', (_req, res) => res.json({ success: true, data: { status: 'ok' } }));
+app.use('/api', require('./routes'));
+app.use((_req, res) => res.status(404).json({ success: false, error: 'Not found' }));
+app.use(errorHandler);
+module.exports = app;
